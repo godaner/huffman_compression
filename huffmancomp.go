@@ -9,17 +9,22 @@ import (
 	"github.com/icza/bitio"
 	"io"
 	"io/ioutil"
+	"strconv"
 )
 
 type HuffmanCompression struct {
 	huffmanTree tree.HuffmanTree
 	codes       map[int]string
+	r           io.Reader
+	w           io.Writer
 }
 
 func (hc *HuffmanCompression) Decode(r io.Reader, w io.Writer) (err error) {
 	return nil
 }
 func (hc *HuffmanCompression) Encode(r io.Reader, w io.Writer) (err error) {
+	hc.r = r
+	hc.w = w
 	datas, err := ioutil.ReadAll(r)
 	if err != nil {
 		return err
@@ -28,11 +33,11 @@ func (hc *HuffmanCompression) Encode(r io.Reader, w io.Writer) (err error) {
 	if err != nil {
 		return err
 	}
-	err = hc.writeHuffmanHeader(w)
+	err = hc.writeHuffmanHeader()
 	if err != nil {
 		return err
 	}
-	err = hc.writeHuffmanDatas(datas, w)
+	err = hc.writeHuffmanDatas(datas)
 	if err != nil {
 		return err
 	}
@@ -50,7 +55,7 @@ type huffmanTreeHeaderElem struct {
 }
 
 // writeHuffmanHeader
-func (hc *HuffmanCompression) writeHuffmanHeader(w io.Writer) (err error) {
+func (hc *HuffmanCompression) writeHuffmanHeader() (err error) {
 	header := hc.buildHuffmanTreeHeader()
 	buf := new(bytes.Buffer)
 	err = binary.Write(buf, binary.BigEndian, header.eLen)
@@ -71,7 +76,7 @@ func (hc *HuffmanCompression) writeHuffmanHeader(w io.Writer) (err error) {
 			return err
 		}
 	}
-	err = binary.Write(w, binary.BigEndian, buf.Bytes())
+	err = binary.Write(hc.w, binary.BigEndian, buf.Bytes())
 	if err != nil {
 		return err
 	}
@@ -127,16 +132,21 @@ func (hc *HuffmanCompression) buildHuffmanTree(datas []byte) (err error) {
 	return nil
 }
 
-func (hc *HuffmanCompression) writeHuffmanDatas(datas []byte, w io.Writer) error {
+func (hc *HuffmanCompression) writeHuffmanDatas(datas []byte) error {
+	bw := bitio.NewWriter(hc.w)
+	defer bw.Close()
 	for _, d := range datas {
 		code := hc.codes[int(d)]
-		for _, c := range code {
-			bw := bitio.NewWriter(w)
-			_, err := bw.Write([]byte{byte(c - '0')})
-			if err != nil {
-				return err
-			}
+		r, err := strconv.ParseUint(code, 2, 64)
+		if err != nil {
+			continue
+		}
+		err = bw.WriteBits(r, uint8(len(code)))
+		if err != nil {
+			return err
 		}
 	}
+
 	return nil
 }
+
