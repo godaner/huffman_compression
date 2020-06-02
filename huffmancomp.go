@@ -139,7 +139,7 @@ func (hc *HuffmanCompression) writeHuffmanDatas(datas []byte) error {
 		code := hc.codes[int(d)]
 		r, err := strconv.ParseUint(code, 2, 64)
 		if err != nil {
-			continue
+			return err
 		}
 		err = bw.WriteBits(r, uint8(len(code)))
 		if err != nil {
