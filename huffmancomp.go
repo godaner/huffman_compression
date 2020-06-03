@@ -21,7 +21,7 @@ func (hc *HuffmanCompression) Encode(r io.Reader, w io.Writer) (err error) {
 }
 
 type huffmanTreeHeader struct {
-	eLen byte
+	eLen uint16
 	elem []huffmanTreeHeaderElem
 }
 type huffmanTreeHeaderElem struct {

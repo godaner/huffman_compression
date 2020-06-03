@@ -83,7 +83,7 @@ func (e *encoder) buildHuffmanTreeHeader() huffmanTreeHeader {
 		})
 	}
 	return huffmanTreeHeader{
-		eLen: byte(len(elems)),
+		eLen: uint16(len(elems)),
 		elem: elems,
 	}
 }
