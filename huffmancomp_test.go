@@ -40,7 +40,7 @@ func TestHuffmanCompression_Decode(t *testing.T) {
 	defer srcFile.Close()
 	//dst := "/home/godaner/Downloads/youkuclient_setup_ywebtop1_7.7.6.4031.hfm"
 	//dst := "/home/godaner/Downloads/template.hfm"
-	dst := "/home/godaner/Downloads/a.jpg1"
+	dst := "/home/godaner/Downloads/a1.jpg"
 	dstFile, err := os.Create(dst)
 	if err != nil {
 		panic(err)

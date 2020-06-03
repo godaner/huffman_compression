@@ -9,9 +9,9 @@ import (
 )
 
 type decoder struct {
-	codes map[int]string
+	codes map[string]int // "10010" -> 'c'
 	r     io.Reader
-	bs []byte
+	bs    []byte
 	w     io.Writer
 }
 
@@ -28,7 +28,7 @@ func (e *decoder) decode() (err error) {
 }
 
 func (e *decoder) readHuffmanHeader() error {
-	e.codes = map[int]string{}
+	e.codes = map[string]int{}
 	bts, err := ioutil.ReadAll(e.r)
 	if err != nil {
 		return err
@@ -61,17 +61,29 @@ func (e *decoder) readHuffmanHeader() error {
 		len = len + int(elem.vsLen*8)
 
 		header.elem = append(header.elem, elem)
-		e.codes[int(elem.k)] = string(elem.vs)
+		e.codes[string(elem.vs)] = int(elem.k)
+
 	}
 	e.bs = bts[len+1:]
 	return nil
 }
 
 func (e *decoder) readHuffmanDatas() (err error) {
-	s:=""
-	for _,b:=range e.bs{
-		s+=strconv.FormatUint(uint64(b),2)
+	cbit := ""
+	for _, b := range e.bs {
+		bits := strconv.FormatUint(uint64(b), 2)
+		for _, bit := range bits {
+			asc, ok := e.codes[cbit]
+			if !ok {
+				cbit += string(bit)
+				continue
+			}
+			_, err = e.w.Write([]byte(string(asc)))
+			if err != nil {
+				return err
+			}
+			cbit = ""
+		}
 	}
-
 	return nil
 }
